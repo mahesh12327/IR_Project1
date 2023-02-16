@@ -6,29 +6,19 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class Main {
-    private static final String WEBSITE = "https://redirect.cs.umbc.edu/courses/graduate/676/term%20project/files/";
+//    private static final String WEBSITE = "https://redirect.cs.umbc.edu/courses/graduate/676/term%20project/files/";
 
     public static void main(String[] args) {
         long startTime = System.nanoTime();
         // Input - Path to store Directory and files
         System.out.println("The input and output directories - " + args[0] + " ---- " + args[1]);
-//        Scanner sc = new Scanner(System.in);
-//        String path = sc.nextLine();
-        String inputPath = "";
-        String outputPath = "";
         if(!(args[0].isEmpty()) && !(args[1].isEmpty())) {
-            inputPath = args[0];
-            outputPath = args[1];
+            // Method to scrape the html files
+            scanItems(args[0], args[1]);
         }
-        System.out.println(inputPath + " ---- " + outputPath);
-        // Method to scrape the html files
-        scanItems(outputPath, inputPath);
         long endTime = System.nanoTime();
         long duration = (endTime - startTime);
         System.out.println("duration ---> " + duration + "ns");
@@ -69,49 +59,42 @@ public class Main {
 
     }
 
-    public static void displayFiles(File[] files) {
+    public static String[] getFilePaths(File[] files) {
+        String s = (String.valueOf(files.length));
+        String[] filePathsArr = new String[Integer.parseInt(s)];
         for (File filename : files) {
             // If a subdirectory is found, print the name of the subdirectory
             if (filename.isDirectory()) {
-                System.out.println("Directory: " + filename.getName());
+//                System.out.println("Directory: " + filename.getName());
                 // and call the displayFiles function recursively to list files present in subdirectory
-                displayFiles(filename.listFiles());
+                getFilePaths(filename.listFiles());
             }
             // Printing the file name present in given path
             else {
                 // Getting the file name
-                System.out.println("File: " + filename);
+//                System.out.println("File: " + filename.getAbsolutePath());
+                String[] filePathsSplit = filename.getAbsolutePath().split("/");
+                String numberString = (filePathsSplit[filePathsSplit.length - 1]).replaceAll("[^0-9]", "");
+                filePathsArr[Integer.parseInt(numberString) - 1] = filename.getAbsolutePath();
             }
         }
+        return filePathsArr;
     }
-    private static void scanItems(String path, String outputPath) {
-        Document document;
-        Elements elements;
+
+    private static void scanItems(String inputPath, String outputPath) {
         try {
-            File[] files = new File(outputPath).listFiles();
-            displayFiles(files);
-            document = Jsoup.connect(WEBSITE).get();
-            elements = document.select("a");
-            int count = 1;
-            FileWriter tokenFileWriter = new FileWriter( path + "/FrequenciesSortedByToken.txt");
-            FileWriter frequencyFileWriter = new FileWriter( path + "/FrequenciesSortedByFrequency.txt");
+            File[] files = new File(inputPath).listFiles();
+            // Method to get all the file paths
+            String[] filePaths = getFilePaths(files);
+            FileWriter tokenFileWriter = new FileWriter( outputPath + "/FrequenciesSortedByToken.txt");
+            FileWriter frequencyFileWriter = new FileWriter( outputPath + "/FrequenciesSortedByFrequency.txt");
             Map<String, Integer> frequencySortByTokenTreeMap = new TreeMap<String, Integer>();
-            int k = 0;
             long startTime = System.nanoTime();
 
-            for(Element element : elements) {
-                String link = element.attributes().get("href");
-                if(link.contains(".html")) {
-//                    while(k<500){
-//                        k++;
-//                        enterIntoPages(link, i, path, frequencySortByTokenTreeMap);
-//                        break;
-//                    }
-                    // method to get tokens without special characters and numbers
-                    enterIntoPages(link, count, path, frequencySortByTokenTreeMap);
-                    count++;
-                }
+            for(int i=0; i<filePaths.length; i++) {
+                enterIntoPages(filePaths[i], (i+1), outputPath, frequencySortByTokenTreeMap);
             }
+
             long endTime = System.nanoTime();
             long duration = (endTime - startTime);
             System.out.println("duration 1 ---> " + duration + "ns");
@@ -128,12 +111,12 @@ public class Main {
         }
     }
 
-
-    private static void enterIntoPages(String link, int count, String path, Map frequencySortByTokenTreeMap) {
+    private static void enterIntoPages(String link, int count, String outputPath, Map<String, Integer> frequencySortByTokenTreeMap) {
         try {
-            Document document = Jsoup.connect(WEBSITE + link).get();
-            Elements elements = document.select("body");
-            final File parentDir = new File(path + "/crawl");
+            File input = new File(link);
+            Document doc = Jsoup.parse(input, "UTF-8", "");
+            Elements elements = doc.select("body");
+            final File parentDir = new File(outputPath + "/crawl");
             parentDir.mkdir();
             System.out.println("page " + count);
             for(Element element : elements) {
