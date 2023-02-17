@@ -10,7 +10,6 @@ import java.util.*;
 
 public class Main {
 //    private static final String WEBSITE = "https://redirect.cs.umbc.edu/courses/graduate/676/term%20project/files/";
-
     public static void main(String[] args) {
         long startTime = System.nanoTime();
         // Input - Path to store Directory and files
@@ -65,7 +64,7 @@ public class Main {
         for (File filename : files) {
             // If a subdirectory is found, print the name of the subdirectory
             if (filename.isDirectory()) {
-//                System.out.println("Directory: " + filename.getName());
+                System.out.println("Directory: " + filename.getName());
                 // and call the displayFiles function recursively to list files present in subdirectory
                 getFilePaths(filename.listFiles());
             }
@@ -74,8 +73,11 @@ public class Main {
                 // Getting the file name
 //                System.out.println("File: " + filename.getAbsolutePath());
                 String[] filePathsSplit = filename.getAbsolutePath().split("/");
-                String numberString = (filePathsSplit[filePathsSplit.length - 1]).replaceAll("[^0-9]", "");
-                filePathsArr[Integer.parseInt(numberString) - 1] = filename.getAbsolutePath();
+//                System.out.println(filePathsSplit[filePathsSplit.length - 1] + " --- " + filename.getAbsolutePath());
+                if(filePathsSplit[filePathsSplit.length - 1] != ".DS_Store") {
+                    String numberString = (filePathsSplit[filePathsSplit.length - 1]).replaceAll("[^0-9]", "");
+                    filePathsArr[Integer.parseInt(numberString) - 1] = filename.getAbsolutePath();
+                }
             }
         }
         return filePathsArr;
@@ -144,6 +146,3 @@ public class Main {
         }
     }
 }
-
-//            /Users/mahesh/IdeaProjects/IR_Project1
-//            /Users/mahesh/Downloads/files
